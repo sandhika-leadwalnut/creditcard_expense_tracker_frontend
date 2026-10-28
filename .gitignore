@@ -1,0 +1,23 @@
+# --- dependencies and build output ---
+node_modules/
+dist/
+
+# --- env files (keep only the example) ---
+.env
+.env.*
+!.env.example
+
+# --- Vercel ---
+.vercel/
+
+# --- logs, editors, OS ---
+*.log
+npm-debug.log*
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- archives ---
+*.tgz
+*.zip

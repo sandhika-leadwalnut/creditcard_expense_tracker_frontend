@@ -64,7 +64,7 @@ function TdsCell({ row, editable, sections, onSave }) {
           <button className="btn small" onClick={() => setOpen(false)}>Cancel</button>
           {t.applicable && <button className="link danger small" onClick={remove}>Remove</button>}
         </div>
-        {/* <div className="muted small">Leave amount empty to calculate from the section rate</div> */}
+        <div className="muted small">Leave amount empty to calculate from the section rate</div>
       </div>
     );
   }
@@ -75,7 +75,7 @@ function TdsCell({ row, editable, sections, onSave }) {
       ? <button className={"pill pill-btn " + (t.deposited ? "ok" : "warn")} title={title + " · click to edit"} onClick={start}>{label}</button>
       : <span className={"pill " + (t.deposited ? "ok" : "warn")} title={title}>{label}</span>;
   }
-  return editable ? <button className="link small" onClick={start}>+ TDS</button> : <span className="muted small">–</span>;
+  return editable ? <button className="link small nowrap" onClick={start}>+ TDS</button> : <span className="muted small">–</span>;
 }
 
 export default function TxnTable({ rows, setRows, editable, selected, setSelected, onOpen, onChanged }) {

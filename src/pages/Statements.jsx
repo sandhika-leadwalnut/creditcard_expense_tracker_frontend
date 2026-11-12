@@ -41,7 +41,7 @@ export default function Statements() {
                   <tr key={s.id} className="clickable" onClick={() => nav(`/statements/${s.id}`)}>
                     <td><div className="strong">{s.bank}</div><div className="muted small">{s.file_name}</div></td>
                     <td>{fmtDate(s.period_start)} – {fmtDate(s.period_end)}</td>
-                    <td>XXXX {s.card_last4}</td>
+                    <td><div>XXXX {s.card_last4}</div>{s.card_holder && <div className="muted small">{s.card_holder}{s.default_company && ` · ${s.default_company}`}</div>}</td>
                     <td className="num">{inr(s.purchases_total, 2)}</td>
                     <td>{open ? <span className="pill warn">{open} to fix</span> : <span className="pill ok">All clear</span>}</td>
                     <td><span className={"pill " + (s.status === "locked" ? "locked" : "info")}>{s.status === "locked" ? "Locked" : "In review"}</span></td>

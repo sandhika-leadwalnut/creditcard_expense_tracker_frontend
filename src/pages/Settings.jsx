@@ -3,7 +3,7 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 
 export default function Settings() {
-  const tabs = ["Vendor rules", "Categories", "TDS sections", "Companies"];
+  const tabs = ["Cards", "Vendor rules", "Categories", "TDS sections", "Companies"];
   const [tab, setTab] = useState(tabs[0]);
   return (
     <div className="page">
@@ -13,6 +13,7 @@ export default function Settings() {
       {tab === "Categories" && <Categories />}
       {tab === "TDS sections" && <Tds />}
       {tab === "Companies" && <Companies />}
+      {tab === "Cards" && <Cards />}
     </div>
   );
 }
@@ -111,6 +112,59 @@ function Tds() {
       {err && <div className="form-error mx">{err}</div>}
       <table className="table"><thead><tr><th>Section</th><th>Description</th><th className="num">Default rate</th></tr></thead>
         <tbody>{meta.tds_sections.map((s) => <tr key={s.code}><td className="strong">{s.code}</td><td>{s.name}</td><td className="num">{s.rate}%</td></tr>)}</tbody></table>
+    </div>
+  );
+}
+
+function Cards() {
+  const { meta, isAdmin } = useAuth();
+  const [rows, setRows] = useState([]);
+  const blank = { card_last4: "", holder_name: "", company: meta.companies[0]?.code || "LW", bank: "Kotak Mahindra Bank" };
+  const [n, setN] = useState(blank);
+  const [err, run] = useErr();
+  const load = () => api("/cards").then(setRows);
+  useEffect(() => { load(); }, []);
+  const save = (body) => run(async () => {
+    if (!/^\d{4}$/.test(body.card_last4)) throw new Error("Enter the last 4 digits of the card");
+    if (!body.holder_name.trim()) throw new Error("Enter the cardholder name");
+    await api("/cards", { method: "POST", body });
+    setN(blank); load();
+  });
+  const coName = (code) => meta.companies.find((c) => c.code === code)?.name || code;
+  return (
+    <div className="card">
+      <p className="muted pad small">When a statement for one of these cards is uploaded, every transaction is set to the card's company automatically. A vendor rule with its own company still wins, and you can change any transaction afterwards.</p>
+      {isAdmin && (
+        <div className="form-row pad">
+          <input placeholder="Last 4 digits e.g. 7170" maxLength={4} value={n.card_last4} onChange={(e) => setN({ ...n, card_last4: e.target.value.replace(/\D/g, "") })} />
+          <input placeholder="Cardholder name" value={n.holder_name} onChange={(e) => setN({ ...n, holder_name: e.target.value })} />
+          <select value={n.company} onChange={(e) => setN({ ...n, company: e.target.value })}>{meta.companies.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}</select>
+          <input placeholder="Bank" value={n.bank} onChange={(e) => setN({ ...n, bank: e.target.value })} />
+          <button className="btn primary" onClick={() => save(n)}>Add card</button>
+        </div>
+      )}
+      {err && <div className="form-error mx">{err}</div>}
+      <table className="table">
+        <thead><tr><th>Card</th><th>Cardholder</th><th>Bank</th><th>Default company</th><th></th></tr></thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.id}>
+              <td className="strong">XXXX {c.card_last4}</td>
+              <td>{c.holder_name}</td>
+              <td>{c.bank || "–"}</td>
+              <td>
+                {isAdmin ? (
+                  <select value={c.company} onChange={(e) => save({ card_last4: c.card_last4, holder_name: c.holder_name, bank: c.bank, company: e.target.value })}>
+                    {meta.companies.map((x) => <option key={x.code} value={x.code}>{x.name}</option>)}
+                  </select>
+                ) : <><span className={"dot " + c.company} />{coName(c.company)}</>}
+              </td>
+              <td>{isAdmin && <button className="link danger small" onClick={() => run(async () => { await api(`/cards/${c.id}`, { method: "DELETE" }); load(); })}>Remove</button>}</td>
+            </tr>
+          ))}
+          {rows.length === 0 && <tr><td colSpan={5} className="muted center pad">No cards yet. Add a card so its statements are assigned to the right company automatically.</td></tr>}
+        </tbody>
+      </table>
     </div>
   );
 }

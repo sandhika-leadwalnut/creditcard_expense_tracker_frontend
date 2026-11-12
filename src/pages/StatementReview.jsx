@@ -57,6 +57,17 @@ export default function StatementReview() {
     }
   };
 
+  const applyCard = async () => {
+    try {
+      const r = await api(`/statements/${id}/apply-card-default`, { method: "POST" });
+      setMsg(`${r.updated} rows set to ${r.company}`);
+      await Promise.all([loadRows(), loadSt()]);
+    } catch (e) {
+      setMsg(e.message);
+    }
+    setTimeout(() => setMsg(""), 4000);
+  };
+
   const unlock = async () => { await api(`/statements/${id}/unlock`, { method: "POST" }); loadSt(); };
   const remove = async () => {
     if (!window.confirm("Delete this statement and all its rows and attachments?")) return;
@@ -72,10 +83,13 @@ export default function StatementReview() {
       <div className="crumbs"><Link to="/statements">Statements</Link> / {fmtDate(st.period_start)} – {fmtDate(st.period_end)}</div>
       <div className="page-head">
         <div>
-          <h1>{st.bank} <span className="muted">· XXXX {st.card_last4}</span></h1>
-          <p className="muted">{st.card_type} · statement dated {fmtDate(st.statement_date)} · uploaded by {st.uploaded_by}</p>
+          <h1>{st.card_holder || st.bank} <span className="muted">· XXXX {st.card_last4}</span></h1>
+          <p className="muted">{st.bank} {st.card_type}{st.default_company && <> · card default <span className={"dot " + st.default_company} />{st.default_company}</>} · statement dated {fmtDate(st.statement_date)} · uploaded by {st.uploaded_by}</p>
         </div>
         <div className="actions">
+          {editable && st.checklist.unassigned_company > 0 && (
+            <button className="btn" onClick={applyCard} title="Fill the card's company into rows without a company">Apply card default</button>
+          )}
           <button className="btn" onClick={() => download(`/statements/${id}/file`, null, st.file_name)}>Statement PDF</button>
           <button className="btn" onClick={() => download("/export/transactions.csv", { statement_id: id }, "expenses.csv")}>Export CSV</button>
           {locked ? (
